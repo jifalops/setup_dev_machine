@@ -134,6 +134,10 @@ if [ -n "$CODE_SETTINGS_GIST" ]; then
   fi
 fi
 
+
+# Prerequisites
+sudo apt-get -y install wget make clang software-properties-common
+
 # VS Code with settings-sync
 if [ ${HAS_TARGET[vscode]} -eq 1 ]; then
   echo
