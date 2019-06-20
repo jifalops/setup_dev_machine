@@ -5,7 +5,7 @@
 # See https://developer.android.com/studio/#command-tools
 ANDROID_TOOLS_URL='https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip'
 # See https://flutter.dev/docs/get-started/install/chromeos#install-the-android-sdks
-ANDROID_SDKMANAGER_ARGS='"build-tools;28.0.3" "emulator" "tools" "platform-tools" "platforms;android-28" "extras;google;google_play_services" "extras;google;webdriver" "system-images;android-28;google_apis_playstore;x86_64"'
+#ANDROID_SDKMANAGER_ARGS='' See the TODO below
 ANDROID_INFO_UPDATED='2019-05-30'
 
 # See https://github.com/nvm-sh/nvm/blob/master/README.md#install--update-script
@@ -220,7 +220,8 @@ if [ ${HAS_TARGET[flutter]} ] || [ ${HAS_TARGET[android]} ]; then
   touch "$HOME/.android/repositories.cfg"
 
   yes | sdkmanager --licenses
-  sdkmanager "$ANDROID_SDKMANAGER_ARGS"
+  # TODO pass this as a version-dependent variable.
+  sdkmanager "build-tools;28.0.3" "emulator" "tools" "platform-tools" "platforms;android-28" "extras;google;google_play_services" "extras;google;webdriver" "system-images;android-28;google_apis_playstore;x86_64"
 
   export PATH="$PATH:$ANDROID_HOME/platform-tools"
   PATH_CHANGES+=':$ANDROID_HOME/platform-tools'
