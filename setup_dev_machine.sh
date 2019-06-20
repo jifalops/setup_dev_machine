@@ -46,8 +46,7 @@ miniconda
 pip
         Installs pip for Python 3.
 
-Specifying the targets "vscode flutter node anaconda" constitutes a full install
-of available tools.
+Specifying the targets "vscode flutter node anaconda" constitutes a full install.
 
 For information about the SettingsSync extension for VSCode, see
 https://marketplace.visualstudio.com/items?itemName=Shan.code-settings-sync.
@@ -87,11 +86,6 @@ set -- "${TARGETS[@]}" # restore positional parameters
 
 # Validate arg count
 if [ $# -lt 1 ]; then
-  echo "$USAGE"
-  exit 1
-fi
-if [ $# -gt 1 ]; then
-  echo "Unexpected argument $2"
   echo "$USAGE"
   exit 1
 fi
@@ -278,6 +272,7 @@ Name=New Empty Window
 Exec=$INSTALL_DIR/anaconda/bin/spyder
 Icon=$INSTALL_DIR/anaconda/lib/python3.7/site-packages/spyder/images/spyder.svg
 EOF
+  sudo update-desktop-database
 
   export PATH="$PATH:$INSTALL_DIR/anaconda/bin:$INSTALL_DIR/anaconda/condabin"
   PATH_CHANGES+=":$INSTALL_DIR/anaconda/bin:$INSTALL_DIR/anaconda/condabin"
