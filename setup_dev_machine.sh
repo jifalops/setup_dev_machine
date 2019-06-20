@@ -141,6 +141,7 @@ if [ ${HAS_TARGET[vscode]} -eq 1 ]; then
   echo "Installing VS Code by adding it to the apt sources list"
   echo "See https://code.visualstudio.com/docs/setup/linux"
   echo
+  sudo apt-get -y install gnupg
   curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor >microsoft.gpg
   sudo install -o root -g root -m 644 microsoft.gpg /etc/apt/trusted.gpg.d/
   sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main" > /etc/apt/sources.list.d/vscode.list'
