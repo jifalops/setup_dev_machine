@@ -115,7 +115,7 @@ if [ -n "$INSTALL_DIR" ]; then
   fi
 else
   INSTALL_DIR="$HOME/tools"
-  if [ $HAS_TARGET[flutter] -eq 1 ] && [ -d "$INSTALL_DIR/flutter" ]; then
+  if [ ${HAS_TARGET[flutter]} -eq 1 ] && [ -d "$INSTALL_DIR/flutter" ]; then
     echo "$INSTALL_DIR/flutter already exists."
     exit 1
   fi
@@ -135,7 +135,7 @@ if [ -n "$CODE_SETTINGS_GIST" ]; then
 fi
 
 # VS Code with settings-sync
-if [ HAS_TARGET[vscode] -eq 1 ]; then
+if [ ${HAS_TARGET[vscode]} -eq 1 ]; then
   echo
   echo "======================================================="
   echo "Installing VS Code by adding it to the apt sources list"
@@ -171,7 +171,7 @@ if [ HAS_TARGET[vscode] -eq 1 ]; then
 fi
 
 # Flutter
-if [ HAS_TARGET[flutter] -eq 1 ]; then
+if [ ${HAS_TARGET[flutter]} -eq 1 ]; then
   echo
   echo "=========================================================================="
   echo "Setting up Flutter from GitHub (master)"
@@ -188,7 +188,7 @@ if [ HAS_TARGET[flutter] -eq 1 ]; then
 fi
 
 # Android SDK and tools
-if [ HAS_TARGET[flutter] -eq 1 ] || [ HAS_TARGET[android] -eq 1 ]; then
+if [ ${HAS_TARGET[flutter]} -eq 1 ] || [ ${HAS_TARGET[android]} -eq 1 ]; then
   echo
   echo "==================================================="
   echo "Setting up the Android SDK (without Android Studio)"
@@ -225,7 +225,7 @@ if [ HAS_TARGET[flutter] -eq 1 ] || [ HAS_TARGET[android] -eq 1 ]; then
 fi
 
 # Node and npm (via nvm)
-if [ HAS_TARGET[node] -eq 1 ]; then
+if [ ${HAS_TARGET[node]} -eq 1 ]; then
   echo
   echo "======================================================="
   echo "Installing Node and npm via Node Version Manager (nvm)"
@@ -241,7 +241,7 @@ if [ HAS_TARGET[node] -eq 1 ]; then
 fi
 
 # Anaconda data science kit. Includes pip, spyder, jupyter, and many packages.
-if [ HAS_TARGET[anaconda] -eq 1 ]; then
+if [ ${HAS_TARGET[anaconda]} -eq 1 ]; then
   echo
   echo "================================"
   echo "Installing Anaconda for Python 3"
@@ -279,7 +279,7 @@ EOF
 fi
 
 # Miniconda.
-if [ HAS_TARGET[miniconda] -eq 1 ]; then
+if [ ${HAS_TARGET[miniconda]} -eq 1 ]; then
   echo
   echo "================================"
   echo "Installing Anaconda for Python 3"
@@ -292,7 +292,7 @@ if [ HAS_TARGET[miniconda] -eq 1 ]; then
 fi
 
 # pip for Python 3
-if [ HAS_TARGET[pip] -eq 1 ] && [ HAS_TARGET[anaconda] -ne 1 ] && [ HAS_TARGET[miniconda] -ne 1 ]; then
+if [ ${HAS_TARGET[pip]} -eq 1 ] && [ ${HAS_TARGET[anaconda]} -ne 1 ] && [ ${HAS_TARGET[miniconda]} -ne 1 ]; then
   echo
   echo "================================"
   echo "Installing pip for Python 3"
@@ -312,7 +312,7 @@ type ll >/dev/null 2>&1 || echo 'alias ll="ls -la"' >>"$HOME/.profile"
 # Finishing up
 echo "export PATH=\"$PATH_CHANGES:\$PATH\"" >>"$HOME/.profile"
 
-if [ HAS_TARGET[flutter] -eq 1 ]; then
+if [ ${HAS_TARGET[flutter]} -eq 1 ]; then
   flutter doctor
 fi
 
