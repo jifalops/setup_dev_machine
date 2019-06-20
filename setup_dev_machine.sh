@@ -4,8 +4,6 @@
 
 # See https://developer.android.com/studio/#command-tools
 ANDROID_TOOLS_URL='https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip'
-# See https://developer.android.com/studio/#downloads
-ANDROID_STUDIO_URL='https://dl.google.com/dl/android/studio/ide-zips/3.4.1.0/android-studio-ide-183.5522156-linux.tar.gz'
 # See https://flutter.dev/docs/get-started/install/chromeos#install-the-android-sdks
 ANDROID_SDKMANAGER_ARGS='"build-tools;28.0.3" "emulator" "tools" "platform-tools" "platforms;android-28" "extras;google;google_play_services" "extras;google;webdriver" "system-images;android-28;google_apis_playstore;x86_64"'
 ANDROID_INFO_UPDATED='2019-05-30'
@@ -20,12 +18,12 @@ ANACONDA_INFO_UPDATED='2019-05-30'
 #-------------------------------------------------------------------------------
 
 USAGE='
-Usage: setup_dev_machine.sh [OPTIONS] TARGET1,TARGET2,...
+Usage: setup_dev_machine.sh [OPTIONS] TARGET1 [TARGET2 [...]]
 
 OPTIONS
 -h, --help                        Show this help message.
 -p, --path PATH                   The install path for some targets
-                                  (android,flutter,anaconda).
+                                  (android, flutter, anaconda, miniconda).
                                   Defaults to ~/tools/.
 --code-settings-sync GIST TOKEN   VS Code SettingsSync gist and token.
 
@@ -37,8 +35,6 @@ flutter
         Installs Flutter from the git repo. Also installs the "android" target.
 android
         Installs the Android command line tools, without Android Studio.
-studio
-        Installs Android Studio along with the command line tools.
 node
         Installs nvm and the latest version of node/npm.
 anaconda
@@ -49,23 +45,18 @@ miniconda
         Stripped version of anaconda that does not pre-install packages.
 pip
         Installs pip for Python 3.
-chromeos
-        Additional functionality for ChromeOS devices. Currently only symlinks
-        /mnt/chromeos/MyFiles/Downloads/ to ~/Downloads. For the symlink to work,
-        right-click on your Downloads folder in the ChromeOS files app, and
-        select "Share with Linux".
 
-Specifying the targets "vscode,flutter,node,anaconda" constitutes a full install
+Specifying the targets "vscode flutter node anaconda" constitutes a full install
 of available tools.
 
 For information about the SettingsSync extension for VSCode, see
 https://marketplace.visualstudio.com/items?itemName=Shan.code-settings-sync.
 '
 
-ALL_TARGETS=(vscode flutter android studio node anaconda miniconda pip chromeos)
+ALL_TARGETS=(vscode flutter android node anaconda miniconda pip)
 
 # Parse command-line arguments
-POSITIONAL=()
+TARGETS=()
 while [[ $# -gt 0 ]]; do
   key="$1"
 
@@ -87,12 +78,12 @@ while [[ $# -gt 0 ]]; do
     shift # past value
     ;;
   *) # unknown option
-    POSITIONAL+=("$1") # save it in an array for later
-    shift              # past argument
+    TARGETS+=("$1") # save it in an array for later
+    shift           # past argument
     ;;
   esac
 done
-set -- "${POSITIONAL[@]}" # restore positional parameters
+set -- "${TARGETS[@]}" # restore positional parameters
 
 # Validate arg count
 if [ $# -lt 1 ]; then
@@ -105,8 +96,7 @@ if [ $# -gt 1 ]; then
   exit 1
 fi
 
-# Split targets into an array and validate each element.
-IFS=',' read -r -a TARGETS <<<$1
+# Validate targets
 declare -A HAS_TARGET
 for target in "${TARGETS[@]}"; do
   VALID=0
@@ -140,6 +130,8 @@ else
   fi
 fi
 
+cd "$INSTALL_DIR"
+
 # Validate VSCode SettingsSync settings
 if [ -n "$CODE_SETTINGS_GIST" ]; then
   if [ ${#CODE_SETTINGS_GIST} -ne 32 ] || [ ${#CODE_SETTINGS_TOKEN} -ne 40 ]; then
@@ -147,11 +139,6 @@ if [ -n "$CODE_SETTINGS_GIST" ]; then
     exit 1
   fi
 fi
-
-# echo TARGETS = ${TARGETS[@]}
-# echo PATH = $INSTALL_DIR
-# echo CODE_SETTINGS_GIST = $CODE_SETTINGS_GIST
-# echo CODE_SETTINGS_TOKEN = $CODE_SETTINGS_TOKEN
 
 # VS Code with settings-sync
 if [ HAS_TARGET[vscode] -eq 1 ]; then
@@ -202,46 +189,137 @@ if [ HAS_TARGET[flutter] -eq 1 ]; then
 
   sudo apt-get -y install lib32stdc++6
 
-  PATH="$PATH:$INSTALL_DIR/flutter/bin:$INSTALL_DIR/flutter/bin/cache/dart-sdk/bin:$HOME/.pub-cache/bin"
+  export PATH="$PATH:$INSTALL_DIR/flutter/bin:$INSTALL_DIR/flutter/bin/cache/dart-sdk/bin:$HOME/.pub-cache/bin"
   PATH_CHANGES+="$INSTALL_DIR/flutter/bin:$INSTALL_DIR/flutter/bin/cache/dart-sdk/bin:$HOME/.pub-cache/bin"
 fi
 
 # Android SDK and tools
-if [ HAS_TARGET[flutter] -eq 1 ] || [ HAS_TARGET[android] -eq 1 ] || [ HAS_TARGET[studio] -eq 1 ]; then
+if [ HAS_TARGET[flutter] -eq 1 ] || [ HAS_TARGET[android] -eq 1 ]; then
   echo
   echo "==================================================="
-  echo "Setting up the Android SDK"
-  echo "See https://developer.android.com/studio/#downloads"
+  echo "Setting up the Android SDK (without Android Studio)"
+  echo "See https://developer.android.com/studio/#command-tools"
   echo
 
   sudo apt-get -y install default-jre
   sudo apt-get -y install default-jdk
 
-  mkdir "$INSTALL_DIR/android" && cd $_
   export ANDROID_HOME="$INSTALL_DIR/android"
-  echo "export ANDROID_HOME=\"$INSTALL_DIR/android\"" >>"$HOME/.profile"
+  echo "export ANDROID_HOME=\"$ANDROID_HOME\"" >>"$HOME/.profile"
 
-  if [ HAS_TARGET[studio] -eq 1 ]; then
-    wget "$ANDROID_STUDIO_URL"
-    tar xf android-studio-ide*
-    rm android-studio-ide*.tar.gz*
-  else
-    wget "$ANDROID_TOOLS_URL"
-    unzip sdk-tools-linux*
-    rm sdk-tools-linux*.zip*
-  fi
+  mkdir "$ANDROID_HOME"
+  cd "$ANDROID_HOME"
 
-  PATH="$PATH:$ANDROID_HOME/tools/bin:$ANDROID_HOME/tools"
+  wget "$ANDROID_TOOLS_URL"
+  unzip sdk-tools-linux*
+  rm sdk-tools-linux*.zip*
+
+  export PATH="$PATH:$ANDROID_HOME/tools/bin:$ANDROID_HOME/tools"
   PATH_CHANGES+=':$ANDROID_HOME/tools/bin:$ANDROID_HOME/tools'
 
   # Squelches a repeated warning
+  mkdir "$HOME/.android"
   touch "$HOME/.android/repositories.cfg"
 
   yes | sdkmanager --licenses
-  sdkmanager "build-tools;28.0.3" "emulator" "tools" "platform-tools" "platforms;android-28" "extras;google;google_play_services" "extras;google;webdriver" "system-images;android-28;google_apis_playstore;x86_64"
+  sdkmanager "$ANDROID_SDKMANAGER_ARGS"
 
-  PATH="$PATH:$ANDROID_HOME/platform-tools"
+  export PATH="$PATH:$ANDROID_HOME/platform-tools"
   PATH_CHANGES+=':$ANDROID_HOME/platform-tools'
 
-  cd ..
+  cd "$INSTALL_DIR"
 fi
+
+# Node and npm (via nvm)
+if [ HAS_TARGET[node] -eq 1 ]; then
+  echo
+  echo "======================================================="
+  echo "Installing Node and npm via Node Version Manager (nvm)"
+  echo "See https://github.com/nvm-sh/nvm/blob/master/README.md"
+  echo
+
+  curl -o- "$NVM_SETUP_SCRIPT" | bash
+  source "$HOME/.bashrc"
+  nvm install node
+
+  # Firebase tools
+  npm install -g firebase-tools
+fi
+
+# Anaconda data science kit. Includes pip, spyder, jupyter, and many packages.
+if [ HAS_TARGET[anaconda] -eq 1 ]; then
+  echo
+  echo "================================"
+  echo "Installing Anaconda for Python 3"
+  echo
+  curl -s "$ANACONDA_SETUP_SCRIPT" -o "$INSTALL_DIR/anaconda.sh"
+  bash "$INSTALL_DIR/anaconda.sh" -b -p "$INSTALL_DIR/anaconda"
+  rm "$INSTALL_DIR/anaconda.sh"
+
+  # Create a launcher icon for Spyder
+  cat <<EOF >"$HOME/.local/share/applications/spyder.desktop"
+[Desktop Entry]
+Name=Spyder
+GenericName=Text Editor
+Exec=$INSTALL_DIR/anaconda/bin/spyder
+Icon=$INSTALL_DIR/anaconda/lib/python3.7/site-packages/spyder/images/spyder.svg
+Type=Application
+StartupNotify=false
+StartupWMClass=Spyder
+Categories=Utility;TextEditor;Development;IDE;
+MimeType=text/plain;inode/directory;
+Actions=new-empty-window;
+Keywords=spyder;
+
+X-Desktop-File-Install-Version=0.23
+
+[Desktop Action new-empty-window]
+Name=New Empty Window
+Exec=$INSTALL_DIR/anaconda/bin/spyder
+Icon=$INSTALL_DIR/anaconda/lib/python3.7/site-packages/spyder/images/spyder.svg
+EOF
+
+  export PATH="$PATH:$INSTALL_DIR/anaconda/bin:$INSTALL_DIR/anaconda/condabin"
+  PATH_CHANGES+=":$INSTALL_DIR/anaconda/bin:$INSTALL_DIR/anaconda/condabin"
+fi
+
+# Miniconda.
+if [ HAS_TARGET[miniconda] -eq 1 ]; then
+  echo
+  echo "================================"
+  echo "Installing Anaconda for Python 3"
+  echo
+  curl -s "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh" -o "$INSTALL_DIR/miniconda.sh"
+  bash "$INSTALL_DIR/miniconda.sh" -b -p "$INSTALL_DIR/miniconda"
+  rm "$INSTALL_DIR/miniconda.sh"
+  export PATH="$PATH:$INSTALL_DIR/miniconda/bin:$INSTALL_DIR/miniconda/condabin"
+  PATH_CHANGES+=":$INSTALL_DIR/miniconda/bin:$INSTALL_DIR/miniconda/condabin"
+fi
+
+# pip for Python 3
+if [ HAS_TARGET[pip] -eq 1 ] && [ HAS_TARGET[anaconda] -ne 1 ] && [ HAS_TARGET[miniconda] -ne 1 ]; then
+  echo
+  echo "================================"
+  echo "Installing pip for Python 3"
+  echo
+  sudo apt-get -y install python3-pip
+fi
+
+# ChromeOS specific
+if [ -d /mnt/chromeos ] && [ ! -e "$HOME/Downloads" ]; then
+  ln -s /mnt/chromeos/MyFiles/Downloads/ "$HOME/Downloads"
+fi
+
+# Extras
+type la >/dev/null 2>&1 || echo 'alias la="ls -a"' >>"$HOME/.profile"
+type ll >/dev/null 2>&1 || echo 'alias ll="ls -la"' >>"$HOME/.profile"
+
+# Finishing up
+echo "export PATH=\"$PATH_CHANGES:\$PATH\"" >>"$HOME/.profile"
+
+if [ HAS_TARGET[flutter] -eq 1 ]; then
+  flutter doctor
+fi
+
+echo
+echo "Setup complete, restart your terminal session or source ~/.profile."
