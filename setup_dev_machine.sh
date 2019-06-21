@@ -161,6 +161,7 @@ if [ ${HAS_TARGET[vscode]} ]; then
   if [ -n "$CODE_SETTINGS_GIST" ]; then
     sudo apt-get -y install jq
     settings_file="$HOME/.config/Code/User/settings.json"
+    sync_file="$HOME/.config/Code/User/syncLocalSettings.json"
     default_sync_settings="{ \"sync.gist\": \"$CODE_SETTINGS_GIST\", \"sync.autoDownload\": true, \"sync.autoUpload\": true, \"sync.quietSync\": true }"
     if [ -e "$settings_file" ]; then
       echo 'Applying current settings on top of default sync settings.'
@@ -168,8 +169,12 @@ if [ ${HAS_TARGET[vscode]} ]; then
     else
       echo "$default_sync_settings" >"$settings_file"
     fi
-    tmp=$(mktemp)
-    jq ".token = \"$CODE_SETTINGS_TOKEN\"" "$HOME/.config/Code/User/syncLocalSettings.json" >"$tmp" && mv "$tmp" "$HOME/.config/Code/User/syncLocalSettings.json"
+    if [ -e "$sync_file" ]; then
+      tmp=$(mktemp)
+      jq ".token = \"$CODE_SETTINGS_TOKEN\"" "$sync_file" >"$tmp" && mv "$tmp" "$sync_file"
+    else
+      echo "{ \"token\": \"$CODE_SETTINGS_TOKEN\" }" >"$sync_file"
+    fi
     code
   fi
 fi
