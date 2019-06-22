@@ -120,11 +120,9 @@ else
     exit 1
   fi
   if [ ! -d "$INSTALL_DIR" ]; then
-    mkdir "$INSTALL_DIR"
+    mkdir "$INSTALL_DIR" || exit 1
   fi
 fi
-
-cd "$INSTALL_DIR"
 
 # Validate VSCode SettingsSync settings
 if [ -n "$CODE_SETTINGS_GIST" ]; then
@@ -134,8 +132,17 @@ if [ -n "$CODE_SETTINGS_GIST" ]; then
   fi
 fi
 
-# Prerequisites
-sudo apt-get -y install wget make clang software-properties-common
+cd "$INSTALL_DIR"
+
+# Check for already installed targets
+ALREADY_INSTALLED
+if [ ${HAS_TARGET[vscode]} ] && [ $(command -v code) ]; then
+
+fi
+
+#
+# Installers
+#
 
 # VS Code with settings-sync
 if [ ${HAS_TARGET[vscode]} ]; then
@@ -144,6 +151,9 @@ if [ ${HAS_TARGET[vscode]} ]; then
   echo "Installing VS Code by adding it to the apt sources list"
   echo "See https://code.visualstudio.com/docs/setup/linux"
   echo
+  if [ $(command -v code) ]; then
+    echo "WARNING: VSCode is already installed."
+  fi
   sudo apt-get -y install gnupg
   curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor >microsoft.gpg
   sudo install -o root -g root -m 644 microsoft.gpg /etc/apt/trusted.gpg.d/
@@ -186,11 +196,13 @@ if [ ${HAS_TARGET[flutter]} ]; then
   echo "Setting up Flutter from GitHub (master)"
   echo "See https://flutter.dev/docs/development/tools/sdk/releases"
   echo
-
+  if [ $(command -v flutter) ]; then
+    echo "WARNING: flutter is already installed."
+  fi
   git clone -b master https://github.com/flutter/flutter.git "$INSTALL_DIR/flutter"
   "$INSTALL_DIR/flutter/bin/flutter" --version
 
-  sudo apt-get -y install lib32stdc++6
+  sudo apt-get -y install lib32stdc++6 make clang
 
   export PATH="$PATH:$INSTALL_DIR/flutter/bin:$INSTALL_DIR/flutter/bin/cache/dart-sdk/bin:$HOME/.pub-cache/bin"
   PATH_CHANGES+="$INSTALL_DIR/flutter/bin:$INSTALL_DIR/flutter/bin/cache/dart-sdk/bin:$HOME/.pub-cache/bin"
@@ -203,18 +215,21 @@ if [ ${HAS_TARGET[flutter]} ] || [ ${HAS_TARGET[android]} ]; then
   echo "Setting up the Android SDK (without Android Studio)"
   echo "See https://developer.android.com/studio/#command-tools"
   echo
+  if [ $(command -v adb) ] && [ $(command -v sdkmanager) ] && [ $(command -v emulator) ]; then
+    echo "WARNING: android tools are already installed."
+  fi
+  sudo apt-get -y install default-jre default-jdk wget
 
-  sudo apt-get -y install default-jre
-  sudo apt-get -y install default-jdk
+  if [ -z "$ANDROID_HOME" ]; then
+    export ANDROID_HOME="$INSTALL_DIR/android"
+    echo "export ANDROID_HOME=\"$ANDROID_HOME\"" >>"$HOME/.profile"
+  fi
 
-  export ANDROID_HOME="$INSTALL_DIR/android"
-  echo "export ANDROID_HOME=\"$ANDROID_HOME\"" >>"$HOME/.profile"
-
-  mkdir "$ANDROID_HOME"
+  mkdir "$ANDROID_HOME" >/dev/null 2>&1
   cd "$ANDROID_HOME"
 
   wget "$ANDROID_TOOLS_URL"
-  unzip sdk-tools-linux*
+  unzip sdk-tools-linux*.zip*
   rm sdk-tools-linux*.zip*
 
   export PATH="$PATH:$ANDROID_HOME/tools/bin:$ANDROID_HOME/tools"
@@ -241,9 +256,15 @@ if [ ${HAS_TARGET[node]} ]; then
   echo "Installing Node and npm via Node Version Manager (nvm)"
   echo "See https://github.com/nvm-sh/nvm/blob/master/README.md"
   echo
-
+  if [ $(command -v nvm) ]; then
+    echo "WARNING: nvm is already installed."
+  fi
   curl -o- "$NVM_SETUP_SCRIPT" | bash
-  source "$HOME/.bashrc"
+
+  export NVM_DIR="$HOME/.nvm"
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"                   # This loads nvm
+  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" # This loads nvm bash_completion
+
   nvm install node
 
   # Firebase tools
@@ -256,11 +277,20 @@ if [ ${HAS_TARGET[anaconda]} ]; then
   echo "================================"
   echo "Installing Anaconda for Python 3"
   echo
-  curl -s "$ANACONDA_SETUP_SCRIPT" -o "$INSTALL_DIR/anaconda.sh"
+  if [ $(command -v anaconda) ]; then
+    echo "WARNING: anaconda already installed."
+  fi
+  if [ ! $(command -v wget) ]; then
+    sudo apt-get -y install wget
+  fi
+  wget "$ANACONDA_SETUP_SCRIPT" -O "$INSTALL_DIR/anaconda.sh"
   bash "$INSTALL_DIR/anaconda.sh" -b -p "$INSTALL_DIR/anaconda"
   rm "$INSTALL_DIR/anaconda.sh"
 
   # Create a launcher icon for Spyder
+  if [ ! -d "$HOME/.local/share/applications" ]; then
+    mkdir "$HOME/.local/share/applications"
+  fi
   cat <<EOF >"$HOME/.local/share/applications/spyder.desktop"
 [Desktop Entry]
 Name=Spyder
@@ -292,9 +322,15 @@ fi
 if [ ${HAS_TARGET[miniconda]} ]; then
   echo
   echo "================================"
-  echo "Installing Anaconda for Python 3"
+  echo "Installing Miniconda for Python 3"
   echo
-  curl -s "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh" -o "$INSTALL_DIR/miniconda.sh"
+  if [ $(command -v conda) ] && [ ! $(command -v anaconda) ]; then
+    echo "WARNING: miniconda already installed."
+  fi
+  if [ ! $(command -v wget) ]; then
+    sudo apt-get -y install wget
+  fi
+  wget "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh" -O "$INSTALL_DIR/miniconda.sh"
   bash "$INSTALL_DIR/miniconda.sh" -b -p "$INSTALL_DIR/miniconda"
   rm "$INSTALL_DIR/miniconda.sh"
   export PATH="$PATH:$INSTALL_DIR/miniconda/bin:$INSTALL_DIR/miniconda/condabin"
@@ -318,6 +354,7 @@ fi
 # Extras
 type la >/dev/null 2>&1 || echo 'alias la="ls -a"' >>"$HOME/.profile"
 type ll >/dev/null 2>&1 || echo 'alias ll="ls -la"' >>"$HOME/.profile"
+sudo apt-get -y install software-properties-common
 
 # Finishing up
 echo "export PATH=\"$PATH_CHANGES:\$PATH\"" >>"$HOME/.profile"
