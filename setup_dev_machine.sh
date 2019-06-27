@@ -160,6 +160,14 @@ for target in "${targets[@]}"; do
   fi
 done
 
+
+# Source .profile to pick up any recent changes
+if [ -f "$HOME/.profile" ]; then
+  source "$HOME/.profile"
+elif [ -f "$HOME/.bashrc" ]; then
+  source "$HOME/.bashrc"
+fi
+
 # Ensure targets are not already installed unless --force was supplied.
 # Doing this first lets the command fail right away if there is a problem.
 declare -A target_installed
