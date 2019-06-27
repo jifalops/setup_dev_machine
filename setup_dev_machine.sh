@@ -198,7 +198,7 @@ fi
 #
 # Fatal errors are accounted for, on to the installers.
 #
-PATH_CHANGES=""
+path_changes=""
 
 # VS Code with settings-sync
 if [ ${has_target[vscode]} ]; then
@@ -259,7 +259,7 @@ if [ ${has_target[flutter]} ]; then
 
   if [ ! path_contains "$install_dir/flutter/bin" ]; then
     export PATH="$PATH:$install_dir/flutter/bin:$install_dir/flutter/bin/cache/dart-sdk/bin:$HOME/.pub-cache/bin"
-    PATH_CHANGES+="$install_dir/flutter/bin:$install_dir/flutter/bin/cache/dart-sdk/bin:$HOME/.pub-cache/bin"
+    path_changes+="$install_dir/flutter/bin:$install_dir/flutter/bin/cache/dart-sdk/bin:$HOME/.pub-cache/bin"
   fi
 fi
 
@@ -287,7 +287,7 @@ if [ ${has_target[flutter]} ] || [ ${has_target[android]} ]; then
 
   if [ ! path_contains "$ANDROID_HOME/tools" ]; then
     export PATH="$PATH:$ANDROID_HOME/tools/bin:$ANDROID_HOME/tools"
-    PATH_CHANGES+=':$ANDROID_HOME/tools/bin:$ANDROID_HOME/tools'
+    path_changes+=':$ANDROID_HOME/tools/bin:$ANDROID_HOME/tools'
   fi
 
   # Squelches a repeated warning
@@ -300,7 +300,7 @@ if [ ${has_target[flutter]} ] || [ ${has_target[android]} ]; then
 
   if [ ! path_contains "$ANDROID_HOME/platform-tools" ]; then
     export PATH="$PATH:$ANDROID_HOME/platform-tools"
-    PATH_CHANGES+=':$ANDROID_HOME/platform-tools'
+    path_changes+=':$ANDROID_HOME/platform-tools'
   fi
 
   # reset pwd
@@ -371,7 +371,7 @@ EOF
 
   if [ ! path_contains "$install_dir/anaconda" ]; then
     export PATH="$PATH:$install_dir/anaconda/bin:$install_dir/anaconda/condabin"
-    PATH_CHANGES+=":$install_dir/anaconda/bin:$install_dir/anaconda/condabin"
+    path_changes+=":$install_dir/anaconda/bin:$install_dir/anaconda/condabin"
   fi
 fi
 
@@ -389,7 +389,7 @@ if [ ${has_target[miniconda]} ]; then
 
   if [ ! path_contains "$install_dir/miniconda" ]; then
     export PATH="$PATH:$install_dir/miniconda/bin:$install_dir/miniconda/condabin"
-    PATH_CHANGES+=":$install_dir/miniconda/bin:$install_dir/miniconda/condabin"
+    path_changes+=":$install_dir/miniconda/bin:$install_dir/miniconda/condabin"
   fi
 fi
 
@@ -415,8 +415,8 @@ install_packages software-properties-common
 
 # Finishing up
 
-if [ -n $PATH_CHANGES ]; then
-  echo "export PATH=\"$PATH_CHANGES:\$PATH\"" >>"$HOME/.profile"
+if [ -n $path_changes ]; then
+  echo "export PATH=\"$path_changes:\$PATH\"" >>"$HOME/.profile"
 fi
 
 if [ ${has_target[flutter]} ]; then
