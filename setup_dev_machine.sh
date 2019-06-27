@@ -27,7 +27,9 @@ OPTIONS
 -h, --help                        Show this help message.
 -p, --path PATH                   The install path for some targets
                                   (android, flutter, anaconda, miniconda).
-                                  Defaults to ~/tools/.
+                                  Defaults to ~/tools/. Note for anaconda, the
+                                  spyder launcher icon is created in ~/.local.
+--repos
 
 TARGETS
 vscode
@@ -168,20 +170,20 @@ elif [ -f "$HOME/.bashrc" ]; then
 fi
 
 # Ensure targets are not already installed unless --force was supplied.
-# Doing this first lets the command fail right away if there is a problem.
-declare -A target_installed
-target_installed[vscode]=$(command_exists code)
-target_installed[flutter]=$(command_exists flutter)
-target_installed[android]=$(command_exists sdkmanager)
-# target_installed[studio]=$(command_exists studio.sh)
-target_installed[node]=$(command_exists node)
-target_installed[anaconda]=$(command_exists anaconda)
-target_installed[miniconda]=$(path_contains miniconda)
-target_installed[pip]=$(command_exists pip3)
+# Doing this first lets the script fail immediately if there is a problem.
+declare -A installed
+installed[vscode]=$(command_exists code)
+installed[flutter]=$(command_exists flutter)
+installed[android]=$(command_exists sdkmanager)
+# installed[studio]=$(command_exists studio.sh)
+installed[node]=$(command_exists node)
+installed[anaconda]=$(command_exists anaconda)
+installed[miniconda]=$(path_contains miniconda)
+installed[pip]=$(command_exists pip3)
 
 if [ ! $force_install ]; then
   for target in "${targets[@]}"; do
-    if [ target_installed[$target] ]; then
+    if [ ${installed[$target]} ]; then
       echo "Target '$target' is already installed. Use --force to override."
       exit 1
     fi
@@ -343,6 +345,8 @@ if [ ${has_target[anaconda]} ]; then
   if [ ! -d "$HOME/.local/share/applications" ]; then
     mkdir "$HOME/.local/share/applications"
   fi
+  # A copy of anaconda/share/applications/spyder3.desktop, but the
+  # exec is spyder, not spyder3.
   cat <<EOF >"$HOME/.local/share/applications/spyder3.desktop"
 [Desktop Entry]
 Type=Application
