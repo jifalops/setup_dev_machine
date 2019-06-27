@@ -1,6 +1,7 @@
 #!/bin/bash
 #-------------------------------------------------------------------------------
 # Version-dependent variables. PRs welcome :)
+# https://github.com/jifalops/setup_dev_machine/pulls
 
 # See https://developer.android.com/studio/#command-tools
 ANDROID_TOOLS_URL='https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip'
@@ -21,11 +22,12 @@ USAGE='
 Usage: setup_dev_machine.sh [OPTIONS] TARGET1 [TARGET2 [...]]
 
 OPTIONS
+--code-settings-sync GIST TOKEN   VS Code SettingsSync gist and token.
+-f, --force                       Install targets that are already installed.
 -h, --help                        Show this help message.
 -p, --path PATH                   The install path for some targets
                                   (android, flutter, anaconda, miniconda).
                                   Defaults to ~/tools/.
---code-settings-sync GIST TOKEN   VS Code SettingsSync gist and token.
 
 TARGETS
 vscode
@@ -54,35 +56,51 @@ https://marketplace.visualstudio.com/items?itemName=Shan.code-settings-sync.
 
 ALL_TARGETS=(vscode flutter android node anaconda miniconda pip)
 
+# Utility functions
+command_exists() {
+  $(command -v "$1" >/dev/null 2>&1) && echo 1
+}
+package_exists() {
+  $(dpkg -l "$1" >/dev/null 2>&1) && echo 1
+}
+is_in_path() {
+  [[ $PATH == *"$1"* ]] && echo 1
+}
+
 # Parse command-line arguments
-TARGETS=()
+targets=()
 while [[ $# -gt 0 ]]; do
   key="$1"
 
   case $key in
+  --code-settings-sync)
+    code_settings_gist="$2"
+    code_settings_token="$3"
+    shift # past argument
+    shift # past argument
+    shift # past value
+    ;;
+  -f | --force)
+    force_install=1
+    shift # past argument
+    ;;
   -h | --help)
     echo "$USAGE"
     exit 0
     ;;
   -p | --path)
-    INSTALL_DIR="$2"
+    install_dir="$2"
     shift # past argument
     shift # past value
     ;;
-  --code-settings-sync)
-    CODE_SETTINGS_GIST="$2"
-    CODE_SETTINGS_TOKEN="$3"
-    shift # past argument
-    shift # past argument
-    shift # past value
-    ;;
+
   *) # unknown option
-    TARGETS+=("$1") # save it in an array for later
+    targets+=("$1") # save it in an array for later
     shift           # past argument
     ;;
   esac
 done
-set -- "${TARGETS[@]}" # restore positional parameters
+set -- "${targets[@]}" # restore positional parameters
 
 # Validate arg count
 if [ $# -lt 1 ]; then
@@ -90,66 +108,62 @@ if [ $# -lt 1 ]; then
   exit 1
 fi
 
-# Validate targets
-declare -A HAS_TARGET
-for target in "${TARGETS[@]}"; do
-  VALID=0
-  for t in "${ALL_TARGETS[@]}"; do
-    if [ "$target" == "$t" ]; then
-      VALID=1
-      HAS_TARGET[$t]=1
-      break
-    fi
-  done
-  if [ $VALID -eq 0 ]; then
-    echo "Invalid target $target"
-    exit 1
-  fi
-done
-
-# Validate INSTALL_DIR
-if [ -n "$INSTALL_DIR" ]; then
-  if [ ! -d "$INSTALL_DIR"]; then
-    echo "$INSTALL_DIR is not a directory."
-    exit 1
-  fi
-else
-  INSTALL_DIR="$HOME/tools"
-  if [ ${HAS_TARGET[flutter]} ] && [ -d "$INSTALL_DIR/flutter" ]; then
-    echo "$INSTALL_DIR/flutter already exists."
-    exit 1
-  fi
-  if [ ! -d "$INSTALL_DIR" ]; then
-    mkdir "$INSTALL_DIR" || exit 1
-  fi
-fi
-
 # Validate VSCode SettingsSync settings
-if [ -n "$CODE_SETTINGS_GIST" ]; then
-  if [ ${#CODE_SETTINGS_GIST} -ne 32 ] || [ ${#CODE_SETTINGS_TOKEN} -ne 40 ]; then
+if [ -n "$code_settings_gist" ]; then
+  if [ ${#code_settings_gist} -ne 32 ] || [ ${#code_settings_token} -ne 40 ]; then
     echo "Invalid gist or token. Their lengths are 32 and 40 characters, respectively."
     exit 1
   fi
 fi
 
-cd "$INSTALL_DIR"
-
-# Check for already installed targets
-ALREADY_INSTALLED
-if [ ${HAS_TARGET[vscode]} ] && [ $(command -v code) ]; then
-
+# Validate install_dir
+if [ -n "$install_dir" ]; then
+  if [ ! -d "$install_dir"]; then
+    echo "$install_dir is not a directory."
+    exit 1
+  fi
+else
+  install_dir="$HOME/tools"
+  # TODO move
+  # if [ ${has_target[flutter]} ] && [ -d "$install_dir/flutter" ]; then
+  #   echo "$install_dir/flutter already exists."
+  #   exit 1
+  # fi
+  if [ ! -d "$install_dir" ]; then
+    mkdir "$install_dir" || exit 1
+  fi
 fi
+cd "$install_dir" || exit 1
+
+# Validate targets list
+declare -A has_target
+for target in "${targets[@]}"; do
+  valid=0
+  for t in "${ALL_TARGETS[@]}"; do
+    if [ "$target" == "$t" ]; then
+      valid=1
+      has_target[$t]=1
+      break
+    fi
+  done
+  if [ $valid -eq 0 ]; then
+    echo "Invalid target $target"
+    exit 1
+  fi
+done
+
 
 #
 # Installers
 #
 
 # VS Code with settings-sync
-if [ ${HAS_TARGET[vscode]} ]; then
+if [ ${has_target[vscode]} ]; then
   echo
   echo "======================================================="
   echo "Installing VS Code by adding it to the apt sources list"
   echo "See https://code.visualstudio.com/docs/setup/linux"
+  echo "======================================================="
   echo
   if [ $(command -v code) ]; then
     echo "WARNING: VSCode is already installed."
@@ -168,11 +182,11 @@ if [ ${HAS_TARGET[vscode]} ]; then
   code --install-extension ms-python.python --force
   code --install-extension shan.code-settings-sync --force
 
-  if [ -n "$CODE_SETTINGS_GIST" ]; then
+  if [ -n "$code_settings_gist" ]; then
     sudo apt-get -y install jq
     settings_file="$HOME/.config/Code/User/settings.json"
     sync_file="$HOME/.config/Code/User/syncLocalSettings.json"
-    default_sync_settings="{ \"sync.gist\": \"$CODE_SETTINGS_GIST\", \"sync.autoDownload\": true, \"sync.autoUpload\": true, \"sync.quietSync\": true }"
+    default_sync_settings="{ \"sync.gist\": \"$code_settings_gist\", \"sync.autoDownload\": true, \"sync.autoUpload\": true, \"sync.quietSync\": true }"
     if [ -e "$settings_file" ]; then
       echo 'Applying current settings on top of default sync settings.'
       echo "$default_sync_settings $(cat ${settings_file})" | jq -s add >"$settings_file"
@@ -181,16 +195,16 @@ if [ ${HAS_TARGET[vscode]} ]; then
     fi
     if [ -e "$sync_file" ]; then
       tmp=$(mktemp)
-      jq ".token = \"$CODE_SETTINGS_TOKEN\"" "$sync_file" >"$tmp" && mv "$tmp" "$sync_file"
+      jq ".token = \"$code_settings_token\"" "$sync_file" >"$tmp" && mv "$tmp" "$sync_file"
     else
-      echo "{ \"token\": \"$CODE_SETTINGS_TOKEN\" }" >"$sync_file"
+      echo "{ \"token\": \"$code_settings_token\" }" >"$sync_file"
     fi
     code
   fi
 fi
 
 # Flutter
-if [ ${HAS_TARGET[flutter]} ]; then
+if [ ${has_target[flutter]} ]; then
   echo
   echo "=========================================================================="
   echo "Setting up Flutter from GitHub (master)"
@@ -199,17 +213,17 @@ if [ ${HAS_TARGET[flutter]} ]; then
   if [ $(command -v flutter) ]; then
     echo "WARNING: flutter is already installed."
   fi
-  git clone -b master https://github.com/flutter/flutter.git "$INSTALL_DIR/flutter"
-  "$INSTALL_DIR/flutter/bin/flutter" --version
+  git clone -b master https://github.com/flutter/flutter.git "$install_dir/flutter"
+  "$install_dir/flutter/bin/flutter" --version
 
   sudo apt-get -y install lib32stdc++6 make clang
 
-  export PATH="$PATH:$INSTALL_DIR/flutter/bin:$INSTALL_DIR/flutter/bin/cache/dart-sdk/bin:$HOME/.pub-cache/bin"
-  PATH_CHANGES+="$INSTALL_DIR/flutter/bin:$INSTALL_DIR/flutter/bin/cache/dart-sdk/bin:$HOME/.pub-cache/bin"
+  export PATH="$PATH:$install_dir/flutter/bin:$install_dir/flutter/bin/cache/dart-sdk/bin:$HOME/.pub-cache/bin"
+  PATH_CHANGES+="$install_dir/flutter/bin:$install_dir/flutter/bin/cache/dart-sdk/bin:$HOME/.pub-cache/bin"
 fi
 
 # Android SDK and tools
-if [ ${HAS_TARGET[flutter]} ] || [ ${HAS_TARGET[android]} ]; then
+if [ ${has_target[flutter]} ] || [ ${has_target[android]} ]; then
   echo
   echo "==================================================="
   echo "Setting up the Android SDK (without Android Studio)"
@@ -221,7 +235,7 @@ if [ ${HAS_TARGET[flutter]} ] || [ ${HAS_TARGET[android]} ]; then
   sudo apt-get -y install default-jre default-jdk wget
 
   if [ -z "$ANDROID_HOME" ]; then
-    export ANDROID_HOME="$INSTALL_DIR/android"
+    export ANDROID_HOME="$install_dir/android"
     echo "export ANDROID_HOME=\"$ANDROID_HOME\"" >>"$HOME/.profile"
   fi
 
@@ -246,11 +260,11 @@ if [ ${HAS_TARGET[flutter]} ] || [ ${HAS_TARGET[android]} ]; then
   export PATH="$PATH:$ANDROID_HOME/platform-tools"
   PATH_CHANGES+=':$ANDROID_HOME/platform-tools'
 
-  cd "$INSTALL_DIR"
+  cd "$install_dir"
 fi
 
 # Node and npm (via nvm)
-if [ ${HAS_TARGET[node]} ]; then
+if [ ${has_target[node]} ]; then
   echo
   echo "======================================================="
   echo "Installing Node and npm via Node Version Manager (nvm)"
@@ -272,7 +286,7 @@ if [ ${HAS_TARGET[node]} ]; then
 fi
 
 # Anaconda data science kit. Includes pip, spyder, jupyter, and many packages.
-if [ ${HAS_TARGET[anaconda]} ]; then
+if [ ${has_target[anaconda]} ]; then
   echo
   echo "================================"
   echo "Installing Anaconda for Python 3"
@@ -283,9 +297,9 @@ if [ ${HAS_TARGET[anaconda]} ]; then
   if [ ! $(command -v wget) ]; then
     sudo apt-get -y install wget
   fi
-  wget "$ANACONDA_SETUP_SCRIPT" -O "$INSTALL_DIR/anaconda.sh"
-  bash "$INSTALL_DIR/anaconda.sh" -b -p "$INSTALL_DIR/anaconda"
-  rm "$INSTALL_DIR/anaconda.sh"
+  wget "$ANACONDA_SETUP_SCRIPT" -O "$install_dir/anaconda.sh"
+  bash "$install_dir/anaconda.sh" -b -p "$install_dir/anaconda"
+  rm "$install_dir/anaconda.sh"
 
   # Create a launcher icon for Spyder
   if [ ! -d "$HOME/.local/share/applications" ]; then
@@ -295,8 +309,8 @@ if [ ${HAS_TARGET[anaconda]} ]; then
 [Desktop Entry]
 Name=Spyder
 GenericName=Text Editor
-Exec=$INSTALL_DIR/anaconda/bin/spyder
-Icon=$INSTALL_DIR/anaconda/lib/python3.7/site-packages/spyder/images/spyder.svg
+Exec=$install_dir/anaconda/bin/spyder
+Icon=$install_dir/anaconda/lib/python3.7/site-packages/spyder/images/spyder.svg
 Type=Application
 StartupNotify=false
 StartupWMClass=Spyder
@@ -309,17 +323,17 @@ X-Desktop-File-Install-Version=0.23
 
 [Desktop Action new-empty-window]
 Name=New Empty Window
-Exec=$INSTALL_DIR/anaconda/bin/spyder
-Icon=$INSTALL_DIR/anaconda/lib/python3.7/site-packages/spyder/images/spyder.svg
+Exec=$install_dir/anaconda/bin/spyder
+Icon=$install_dir/anaconda/lib/python3.7/site-packages/spyder/images/spyder.svg
 EOF
   sudo update-desktop-database
 
-  export PATH="$PATH:$INSTALL_DIR/anaconda/bin:$INSTALL_DIR/anaconda/condabin"
-  PATH_CHANGES+=":$INSTALL_DIR/anaconda/bin:$INSTALL_DIR/anaconda/condabin"
+  export PATH="$PATH:$install_dir/anaconda/bin:$install_dir/anaconda/condabin"
+  PATH_CHANGES+=":$install_dir/anaconda/bin:$install_dir/anaconda/condabin"
 fi
 
 # Miniconda.
-if [ ${HAS_TARGET[miniconda]} ]; then
+if [ ${has_target[miniconda]} ]; then
   echo
   echo "================================"
   echo "Installing Miniconda for Python 3"
@@ -330,15 +344,15 @@ if [ ${HAS_TARGET[miniconda]} ]; then
   if [ ! $(command -v wget) ]; then
     sudo apt-get -y install wget
   fi
-  wget "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh" -O "$INSTALL_DIR/miniconda.sh"
-  bash "$INSTALL_DIR/miniconda.sh" -b -p "$INSTALL_DIR/miniconda"
-  rm "$INSTALL_DIR/miniconda.sh"
-  export PATH="$PATH:$INSTALL_DIR/miniconda/bin:$INSTALL_DIR/miniconda/condabin"
-  PATH_CHANGES+=":$INSTALL_DIR/miniconda/bin:$INSTALL_DIR/miniconda/condabin"
+  wget "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh" -O "$install_dir/miniconda.sh"
+  bash "$install_dir/miniconda.sh" -b -p "$install_dir/miniconda"
+  rm "$install_dir/miniconda.sh"
+  export PATH="$PATH:$install_dir/miniconda/bin:$install_dir/miniconda/condabin"
+  PATH_CHANGES+=":$install_dir/miniconda/bin:$install_dir/miniconda/condabin"
 fi
 
 # pip for Python 3
-if [ ${HAS_TARGET[pip]} ] && [ ! ${HAS_TARGET[anaconda]} ] && [ ! ${HAS_TARGET[miniconda]} ]; then
+if [ ${has_target[pip]} ] && [ ! ${has_target[anaconda]} ] && [ ! ${has_target[miniconda]} ]; then
   echo
   echo "================================"
   echo "Installing pip for Python 3"
@@ -359,7 +373,7 @@ sudo apt-get -y install software-properties-common
 # Finishing up
 echo "export PATH=\"$PATH_CHANGES:\$PATH\"" >>"$HOME/.profile"
 
-if [ ${HAS_TARGET[flutter]} ]; then
+if [ ${has_target[flutter]} ]; then
   flutter doctor
 fi
 
