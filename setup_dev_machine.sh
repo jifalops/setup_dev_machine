@@ -71,8 +71,7 @@ install_packages() {
   done
   local len=${#to_install[@]}
   if [ $len ]; then
-    echo "" >/dev/null
-    # sudo apt-get -y install ${to_install[@]}
+    sudo apt-get -y install ${to_install[@]}
   fi
   return $len
 }
