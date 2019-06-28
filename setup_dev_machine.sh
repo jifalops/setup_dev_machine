@@ -315,7 +315,10 @@ if [ ${has_target[node]} ]; then
   echo "See https://github.com/nvm-sh/nvm/blob/master/README.md"
   echo "======================================================="
   echo
-  curl -o- "$NVM_SETUP_SCRIPT" | bash
+  wget "$NVM_SETUP_SCRIPT" -O nvm_setup.sh
+  chmod +x nvm_setup.sh
+  ./nvm_setup.sh
+  rm nvm_setup.sh
 
   export NVM_DIR="$HOME/.nvm"
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"                   # This loads nvm
@@ -415,7 +418,7 @@ fi
 # Extras
 command_exists la || echo 'alias la="ls -a"' >>"$HOME/.profile"
 command_exists ll || echo 'alias ll="ls -la"' >>"$HOME/.profile"
-install_packages software-properties-common
+# install_packages software-properties-common
 
 # Finishing up
 
