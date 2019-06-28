@@ -179,7 +179,6 @@ installed[node]=$(command_exists node)
 installed[anaconda]=$(command_exists anaconda)
 installed[miniconda]=$(path_contains miniconda)
 installed[pip]=$(command_exists pip3)
-
 if [ ! $force_install ]; then
   for target in "${targets[@]}"; do
     if [ ${installed[$target]} ]; then
@@ -221,7 +220,7 @@ if [ ${has_target[vscode]} ]; then
   # Extensions
   # TODO install extensions only if necessary
   code --install-extension dart-code.flutter --force
-  code --install-extension ms-python.python --force
+  # code --install-extension ms-python.python --force
   code --install-extension shan.code-settings-sync --force
 
   if [ -n "$code_settings_gist" ]; then
@@ -321,6 +320,8 @@ if [ ${has_target[node]} ]; then
   export NVM_DIR="$HOME/.nvm"
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"                   # This loads nvm
   [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" # This loads nvm bash_completion
+
+  source "$HOME/.profile"
 
   nvm install node
 
