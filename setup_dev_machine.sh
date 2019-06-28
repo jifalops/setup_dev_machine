@@ -218,9 +218,12 @@ if [ ${has_target[vscode]} ]; then
   install_packages code # or code-insiders
 
   # Extensions
-  # TODO install extensions only if necessary
-  code --install-extension dart-code.flutter --force
-  # code --install-extension ms-python.python --force
+  if [ ${has_target[flutter]} ] || [ ${installed[flutter]} ]; then
+    code --install-extension dart-code.flutter --force
+  fi
+  if [ ${has_target[pip]} ] || [ ${installed[pip]} ]; then
+    code --install-extension ms-python.python --force
+  fi
   code --install-extension shan.code-settings-sync --force
 
   if [ -n "$code_settings_gist" ]; then
@@ -422,7 +425,7 @@ if [ -n $path_changes ]; then
 fi
 
 if [ ${has_target[flutter]} ]; then
-  flutter doctor
+  "$install_dir/flutter/bin/flutter" doctor
 fi
 
 end_time="$(date -u +%s)"
