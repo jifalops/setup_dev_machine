@@ -161,7 +161,6 @@ for target in "${targets[@]}"; do
   fi
 done
 
-
 # Source .profile to pick up any recent changes
 if [ -f "$HOME/.profile" ]; then
   source "$HOME/.profile"
@@ -200,6 +199,7 @@ fi
 # Fatal errors are accounted for, on to the installers.
 #
 path_changes=""
+date_start="$(date)"
 
 # VS Code with settings-sync
 if [ ${has_target[vscode]} ]; then
@@ -427,4 +427,5 @@ if [ ${has_target[flutter]} ]; then
 fi
 
 echo
+echo Script start: $date_start end: $(date)
 echo "Setup complete, restart your terminal session or source ~/.profile."
