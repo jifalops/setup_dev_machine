@@ -198,7 +198,7 @@ fi
 # Fatal errors are accounted for, on to the installers.
 #
 path_changes=""
-date_start="$(date)"
+start_time="$(date -u +%s)"
 
 # VS Code with settings-sync
 if [ ${has_target[vscode]} ]; then
@@ -315,16 +315,11 @@ if [ ${has_target[node]} ]; then
   echo "See https://github.com/nvm-sh/nvm/blob/master/README.md"
   echo "======================================================="
   echo
-  wget "$NVM_SETUP_SCRIPT" -O nvm_setup.sh
-  chmod +x nvm_setup.sh
-  ./nvm_setup.sh
-  rm nvm_setup.sh
+  curl -o- "$NVM_SETUP_SCRIPT" | bash
 
-  export NVM_DIR="$HOME/.nvm"
+  export NVM_DIR="$HOME/.config"
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"                   # This loads nvm
   [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" # This loads nvm bash_completion
-
-  source "$NVM_DIR/nvm.sh"
 
   nvm install node
 
@@ -430,6 +425,8 @@ if [ ${has_target[flutter]} ]; then
   flutter doctor
 fi
 
+end_time="$(date -u +%s)"
+elapsed="$(($end_time-$start_time))"
 echo
-echo Script start: $date_start end: $(date)
-echo "Setup complete, restart your terminal session or source ~/.profile."
+echo "Setup complete in $elapsed seconds."
+echo "Restart your terminal session or source ~/.profile to incorporate changes."
