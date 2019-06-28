@@ -69,10 +69,10 @@ package_exists() {
 install_packages() {
   local to_install=()
   for package in "$@"; do
-    package_exists "$package" || to_install+=("$package")
+    [ $(package_exists "$package") ] || to_install+=("$package")
   done
   local len=${#to_install[@]}
-  if [ $len ]; then
+  if [ $len -gt 0 ]; then
     sudo apt-get -y install ${to_install[@]}
   fi
   return $len
@@ -257,7 +257,7 @@ if [ ${has_target[flutter]} ]; then
 
   install_packages lib32stdc++6 make clang
 
-  if [ ! path_contains "$install_dir/flutter/bin" ]; then
+  if [ ! $(path_contains "$install_dir/flutter/bin") ]; then
     export PATH="$PATH:$install_dir/flutter/bin:$install_dir/flutter/bin/cache/dart-sdk/bin:$HOME/.pub-cache/bin"
     path_changes+="$install_dir/flutter/bin:$install_dir/flutter/bin/cache/dart-sdk/bin:$HOME/.pub-cache/bin"
   fi
@@ -285,7 +285,7 @@ if [ ${has_target[flutter]} ] || [ ${has_target[android]} ]; then
   unzip sdk-tools-linux*.zip*
   rm sdk-tools-linux*.zip*
 
-  if [ ! path_contains "$ANDROID_HOME/tools" ]; then
+  if [ ! $(path_contains "$ANDROID_HOME/tools") ]; then
     export PATH="$PATH:$ANDROID_HOME/tools/bin:$ANDROID_HOME/tools"
     path_changes+=':$ANDROID_HOME/tools/bin:$ANDROID_HOME/tools'
   fi
@@ -298,7 +298,7 @@ if [ ${has_target[flutter]} ] || [ ${has_target[android]} ]; then
   # TODO pass this as a version-dependent variable.
   sdkmanager "build-tools;28.0.3" "emulator" "tools" "platform-tools" "platforms;android-28" "extras;google;google_play_services" "extras;google;webdriver" "system-images;android-28;google_apis_playstore;x86_64"
 
-  if [ ! path_contains "$ANDROID_HOME/platform-tools" ]; then
+  if [ ! $(path_contains "$ANDROID_HOME/platform-tools") ]; then
     export PATH="$PATH:$ANDROID_HOME/platform-tools"
     path_changes+=':$ANDROID_HOME/platform-tools'
   fi
@@ -371,7 +371,7 @@ EOF
 
   sudo update-desktop-database
 
-  if [ ! path_contains "$install_dir/anaconda" ]; then
+  if [ ! $(path_contains "$install_dir/anaconda") ]; then
     export PATH="$PATH:$install_dir/anaconda/bin:$install_dir/anaconda/condabin"
     path_changes+=":$install_dir/anaconda/bin:$install_dir/anaconda/condabin"
   fi
@@ -389,7 +389,7 @@ if [ ${has_target[miniconda]} ]; then
   bash "$install_dir/miniconda.sh" -b -p "$install_dir/miniconda"
   rm "$install_dir/miniconda.sh"
 
-  if [ ! path_contains "$install_dir/miniconda" ]; then
+  if [ ! $(path_contains "$install_dir/miniconda") ]; then
     export PATH="$PATH:$install_dir/miniconda/bin:$install_dir/miniconda/condabin"
     path_changes+=":$install_dir/miniconda/bin:$install_dir/miniconda/condabin"
   fi
@@ -411,8 +411,8 @@ if [ -d /mnt/chromeos ] && [ ! -e "$HOME/Downloads" ]; then
 fi
 
 # Extras
-command_exists la || echo 'alias la="ls -a"' >>"$HOME/.profile"
-command_exists ll || echo 'alias ll="ls -la"' >>"$HOME/.profile"
+[ $(command_exists la) ] || echo 'alias la="ls -a"' >>"$HOME/.profile"
+[ $(command_exists ll) ] || echo 'alias ll="ls -la"' >>"$HOME/.profile"
 # install_packages software-properties-common
 
 # Finishing up
@@ -426,7 +426,7 @@ if [ ${has_target[flutter]} ]; then
 fi
 
 end_time="$(date -u +%s)"
-elapsed="$(($end_time-$start_time))"
+elapsed="$(($end_time - $start_time))"
 echo
 echo "Setup complete in $elapsed seconds."
 echo "Restart your terminal session or source ~/.profile to incorporate changes."
