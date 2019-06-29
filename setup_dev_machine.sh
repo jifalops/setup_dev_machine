@@ -58,6 +58,7 @@ https://marketplace.visualstudio.com/items?itemName=Shan.code-settings-sync.
 '
 
 ALL_TARGETS=(vscode flutter android node anaconda miniconda pip)
+has_updated_sources=0
 
 # Utility functions
 command_exists() {
@@ -73,6 +74,10 @@ install_packages() {
   done
   local len=${#to_install[@]}
   if [ $len -gt 0 ]; then
+    if [ $has_updated_sources -eq 0 ]; then
+      sudo apt-get update
+      has_updated_sources=1
+    fi
     sudo apt-get -y install ${to_install[@]}
   fi
   return $len
@@ -258,7 +263,7 @@ if [ ${has_target[flutter]} ]; then
   git clone -b master https://github.com/flutter/flutter.git "$install_dir/flutter"
   "$install_dir/flutter/bin/flutter" --version
 
-  install_packages lib32stdc++6 make clang
+  install_packages 'lib32stdc++6' 'make' 'clang'
 
   if [ ! $(path_contains "$install_dir/flutter/bin") ]; then
     export PATH="$PATH:$install_dir/flutter/bin:$install_dir/flutter/bin/cache/dart-sdk/bin:$HOME/.pub-cache/bin"
