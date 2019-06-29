@@ -29,7 +29,6 @@ OPTIONS
                                   (android, flutter, anaconda, miniconda).
                                   Defaults to ~/tools/. Note for anaconda, the
                                   spyder launcher icon is created in ~/.local.
---repos
 
 TARGETS
 vscode
@@ -263,7 +262,8 @@ if [ ${has_target[flutter]} ]; then
   git clone -b master https://github.com/flutter/flutter.git "$install_dir/flutter"
   "$install_dir/flutter/bin/flutter" --version
 
-  install_packages 'lib32stdc++6' 'make' 'clang'
+  install_packages lib32stdc++6 clang
+  [ $(command_exists make) ] || sudo apt-get -y install make
 
   if [ ! $(path_contains "$install_dir/flutter/bin") ]; then
     export PATH="$PATH:$install_dir/flutter/bin:$install_dir/flutter/bin/cache/dart-sdk/bin:$HOME/.pub-cache/bin"
@@ -289,9 +289,11 @@ if [ ${has_target[flutter]} ] || [ ${has_target[android]} ]; then
   mkdir "$ANDROID_HOME" >/dev/null 2>&1
   cd "$ANDROID_HOME"
 
-  wget "$ANDROID_TOOLS_URL"
-  unzip sdk-tools-linux*.zip*
-  rm sdk-tools-linux*.zip*
+  if [ ! ${installed[android]} ] || [ $force_install ]; then
+    wget "$ANDROID_TOOLS_URL"
+    unzip -q sdk-tools-linux*.zip*
+    rm sdk-tools-linux*.zip*
+  fi
 
   if [ ! $(path_contains "$ANDROID_HOME/tools") ]; then
     export PATH="$PATH:$ANDROID_HOME/tools/bin:$ANDROID_HOME/tools"
