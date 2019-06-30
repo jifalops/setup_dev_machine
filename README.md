@@ -82,8 +82,8 @@ Many containers have been created to test this script on a chromebook with Linux
 requires having ssh setup with the proper keys. I have found it very helpful to
 keep my `.ssh/` directory as a top level folder in Chrome and "share it with
 Linux". This may be ill advised, but it helps save time. Then after creating a
-container, run `cp -r /mnt/chromeos/MyFiles/.ssh ~/` so that I have access to my
-repos.
+container, run `cp -r /mnt/chromeos/MyFiles/.ssh ~/ && chmod 400 ~/.ssh/id_rsa`
+so that I have access to my repos.
 
 > On Chrome 76 beta channel, sharing with Linux is buggy for secondary VMs, but
 seems consistent when using the termina VM.
@@ -95,7 +95,7 @@ If you aren't, you can leave out the first command. Otherwise just replace with
 your info and keep in a safe place.
 
 ```bash
-cp -r /mnt/chromeos/MyFiles/.ssh ~/ && curl https://raw.githubusercontent.com/jifalops/setup_dev_machine/master/setup_dev_machine.sh -o setup_dev_machine.sh && bash setup_dev_machine.sh vscode flutter node --code-settings-sync YOUR_GIST YOUR_TOKEN --workspace code  git@github.com:USERNAME/workspace_repos.git --git-config "YOUR NAME" "YOUR EMAIL"
+cp -r /mnt/chromeos/MyFiles/.ssh ~/ && chmod 400 ~/.ssh/id_rsa && curl https://raw.githubusercontent.com/jifalops/setup_dev_machine/master/setup_dev_machine.sh -o setup_dev_machine.sh && bash setup_dev_machine.sh vscode flutter node --code-settings-sync YOUR_GIST YOUR_TOKEN --workspace code  git@github.com:USERNAME/workspace_repos.git --git-config "YOUR NAME" "YOUR EMAIL"
 ```
 
 
