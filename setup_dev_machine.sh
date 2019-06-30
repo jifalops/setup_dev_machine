@@ -463,7 +463,9 @@ if [ -n "$workspace_dir" ]; then
   cd "$workspace_dir"
   git init
   git remote add origin "$workspace_repo"
-
+  curl "https://raw.githubusercontent.com/jifalops/setup_dev_machine/master/workspace_repos.sh" -o "$HOME/bin/workspace_repos.sh"
+  chmod +x "$HOME/bin/workspace_repos.sh"
+  "$HOME/bin/workspace_repos.sh" clone
   # Reset pwd
   cd "$install_dir"
 fi
