@@ -145,6 +145,8 @@ https://marketplace.visualstudio.com/items?itemName=Shan.code-settings-sync.
 ```
 
 ## Usage
+
+```man
 Usage: workspace_repos.sh COMMAND
 
 COMMANDS
@@ -154,3 +156,4 @@ backup        Find all the git repos that are a direct child of the current
 clone         Pull from origin master and then run git clone on each line of
               "repos.txt".
 init REMOTE   Clone REMOTE or initialize a git repository with REMOTE
+```
