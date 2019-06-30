@@ -29,6 +29,8 @@ OPTIONS
                                   (android, flutter, anaconda, miniconda).
                                   Defaults to ~/tools/. Note for anaconda, the
                                   spyder launcher icon is created in ~/.local.
+-w, --workspace DIRECTORY REMOTE  Setup a workspace folder in DIRECTORY and clone
+                                  the list of repos at (REMOTE git repo)/repos.txt
 
 TARGETS
 vscode
@@ -111,6 +113,13 @@ while [[ $# -gt 0 ]]; do
     shift # past argument
     shift # past value
     ;;
+  -w | --workspace)
+    workspace_dir="$2"
+    workspace_repo="$3"
+    shift # past argument
+    shift # past argument
+    shift # past value
+    ;;
 
   *) # unknown option
     targets+=("$1") # save it in an array for later
@@ -164,6 +173,17 @@ for target in "${targets[@]}"; do
     exit 1
   fi
 done
+
+# Validate workspace
+if [ -n "$workspace_dir" ]; then
+  if [ ! -d "$workspace_dir" ]; then
+    mkdir "$workspace_dir" || exit 1
+  fi
+  if [[ $workspace_repo != *".git" ]]; then
+    echo Invalid git remote "$workspace_repo"
+    exit 1
+  fi
+fi
 
 # Source .profile to pick up any recent changes
 if [ -f "$HOME/.profile" ]; then
@@ -424,6 +444,7 @@ fi
 [ $(command_exists la) ] || echo 'alias la="ls -a"' >>"$HOME/.profile"
 [ $(command_exists ll) ] || echo 'alias ll="ls -la"' >>"$HOME/.profile"
 # install_packages software-properties-common
+[ -d "$HOME/bin" ] || mkdir "$HOME/bin"
 
 # Finishing up
 
@@ -433,6 +454,18 @@ fi
 
 if [ ${has_target[flutter]} ]; then
   "$install_dir/flutter/bin/flutter" doctor
+fi
+
+#
+# Workspace setup
+#
+if [ -n "$workspace_dir" ]; then
+  cd "$workspace_dir"
+  git init
+  git remote add origin "$workspace_repo"
+
+  # Reset pwd
+  cd "$install_dir"
 fi
 
 end_time="$(date -u +%s)"
