@@ -427,10 +427,6 @@ if [ -n $path_changes ]; then
   echo "export PATH=\"$path_changes:\$PATH\"" >>"$HOME/.profile"
 fi
 
-if [ ${has_target[flutter]} ]; then
-  "$install_dir/flutter/bin/flutter" doctor
-fi
-
 #
 # Workspace setup
 #
@@ -497,6 +493,9 @@ if [ ${has_target[vscode]} ]; then
   fi
 fi
 
+if [ ${has_target[flutter]} ]; then
+  "$install_dir/flutter/bin/flutter" doctor
+fi
 
 end_time="$(date -u +%s)"
 elapsed="$(($end_time - $start_time))"
