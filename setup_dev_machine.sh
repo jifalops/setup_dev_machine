@@ -130,7 +130,7 @@ done
 set -- "${targets[@]}" # restore positional parameters
 
 # Validate arg count
-if [ $# -lt 1 ]; then
+if [ $# -lt 1 ] && [ -z "$workspace_dir" ]; then
   echo "$USAGE"
   exit 1
 fi
