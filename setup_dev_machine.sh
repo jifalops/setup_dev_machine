@@ -24,6 +24,7 @@ Usage: setup_dev_machine.sh [OPTIONS] TARGET1 [TARGET2 [...]]
 OPTIONS
 --code-settings-sync GIST TOKEN   VS Code SettingsSync gist and token.
 -f, --force                       Install targets that are already installed.
+-g, --git-config NAME EMAIL       Set the global git config name and email address.
 -h, --help                        Show this help message.
 -p, --path PATH                   The install path for some targets
                                   (android, flutter, anaconda, miniconda).
@@ -106,6 +107,13 @@ while [[ $# -gt 0 ]]; do
     force_install=1
     shift # past argument
     ;;
+  -g | --git-config)
+    git_config_name="$2"
+    git_config_email="$3"
+    shift # past argument
+    shift # past argument
+    shift # past value
+    ;;
   -h | --help)
     echo "$USAGE"
     exit 0
@@ -187,6 +195,14 @@ if [ -n "$workspace_dir" ]; then
   fi
   if [[ "$workspace_repo" != *".git" ]]; then
     echo Invalid git remote "$workspace_repo"
+    exit 1
+  fi
+fi
+
+# Validate git config
+if [ -n "$git_config_name" ]; then
+  if [[ "$git_config_email" != *"@"* ]]; then
+    echo Invalid git config email "$git_config_email"
     exit 1
   fi
 fi
@@ -473,6 +489,12 @@ if [ -n "$workspace_dir" ]; then
   "$HOME/bin/workspace_repos.sh" clone
   # Reset pwd
   cd "$install_dir"
+fi
+
+# Git config
+if [ -n "$git_config_name" ]; then
+  git config --global user.name "$git_config_name"
+  git config --global user.email "$git_config_email"
 fi
 
 end_time="$(date -u +%s)"
