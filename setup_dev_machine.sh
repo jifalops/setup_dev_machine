@@ -31,6 +31,8 @@ OPTIONS
                                   spyder launcher icon is created in ~/.local.
 -w, --workspace DIRECTORY REMOTE  Setup a workspace folder in DIRECTORY and clone
                                   the list of repos at (REMOTE git repo)/repos.txt
+                                  DIRECTORY is a name, not a path. It will be
+                                  created under $HOME.
 
 TARGETS
 vscode
@@ -176,11 +178,11 @@ done
 
 # Validate workspace
 if [ -n "$workspace_dir" ]; then
-  if [ ! -d "$workspace_dir" ]; then
-    mkdir "$workspace_dir" || exit 1
+  if [ ! -d "$HOME/$workspace_dir" ]; then
+    mkdir "$HOME/$workspace_dir" || exit 1
   fi
-  if [ -d "$workspace_dir/.git" ]; then
-    echo "$workspace_dir" already contains a git repository.
+  if [ -d "$HOME/$workspace_dir/.git" ]; then
+    echo "$HOME/$workspace_dir" already contains a git repository.
     exit 1
   fi
   if [[ "$workspace_repo" != *".git" ]]; then
@@ -466,7 +468,7 @@ fi
 if [ -n "$workspace_dir" ]; then
   curl "https://raw.githubusercontent.com/jifalops/setup_dev_machine/master/workspace_repos.sh" -o "$HOME/bin/workspace_repos.sh"
   chmod +x "$HOME/bin/workspace_repos.sh"
-  cd "$workspace_dir"
+  cd "$HOME/$workspace_dir"
   "$HOME/bin/workspace_repos.sh" init "$workspace_repo"
   "$HOME/bin/workspace_repos.sh" clone
   # Reset pwd
