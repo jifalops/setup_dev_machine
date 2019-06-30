@@ -179,7 +179,11 @@ if [ -n "$workspace_dir" ]; then
   if [ ! -d "$workspace_dir" ]; then
     mkdir "$workspace_dir" || exit 1
   fi
-  if [[ $workspace_repo != *".git" ]]; then
+  if [ -d "$workspace_dir/.git" ]; then
+    echo "$workspace_dir" already contains a git repository.
+    exit 1
+  fi
+  if [[ "$workspace_repo" != *".git" ]]; then
     echo Invalid git remote "$workspace_repo"
     exit 1
   fi
@@ -460,11 +464,10 @@ fi
 # Workspace setup
 #
 if [ -n "$workspace_dir" ]; then
-  cd "$workspace_dir"
-  git init
-  git remote add origin "$workspace_repo"
   curl "https://raw.githubusercontent.com/jifalops/setup_dev_machine/master/workspace_repos.sh" -o "$HOME/bin/workspace_repos.sh"
   chmod +x "$HOME/bin/workspace_repos.sh"
+  cd "$workspace_dir"
+  "$HOME/bin/workspace_repos.sh" init
   "$HOME/bin/workspace_repos.sh" clone
   # Reset pwd
   cd "$install_dir"
