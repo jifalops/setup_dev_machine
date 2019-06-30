@@ -88,6 +88,16 @@ repos.
 > On Chrome 76 beta channel, sharing with Linux is buggy for secondary VMs, but
 seems consistent when using the termina VM.
 
+#### The super-duper setup me computer command
+Want everything done with one command? Me too.
+This assumes you are on a chromebook and sharing your .ssh folder with linux.
+If you aren't, you can leave out the first command. Otherwise just replace with
+your info and keep in a safe place.
+
+```bash
+cp -r /mnt/chromeos/MyFiles/.ssh ~/ && curl https://raw.githubusercontent.com/jifalops/setup_dev_machine/master/setup_dev_machine.sh -o setup_dev_machine.sh && bash setup_dev_machine.sh vscode flutter node --code-settings-sync YOUR_GIST YOUR_TOKEN --workspace code  git@github.com:USERNAME/workspace_repos.git --git-config "YOUR NAME" "YOUR EMAIL"
+```
+
 
 ## Usage
 
