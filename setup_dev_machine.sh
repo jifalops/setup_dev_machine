@@ -467,7 +467,7 @@ if [ -n "$workspace_dir" ]; then
   curl "https://raw.githubusercontent.com/jifalops/setup_dev_machine/master/workspace_repos.sh" -o "$HOME/bin/workspace_repos.sh"
   chmod +x "$HOME/bin/workspace_repos.sh"
   cd "$workspace_dir"
-  "$HOME/bin/workspace_repos.sh" init
+  "$HOME/bin/workspace_repos.sh" init "$workspace_repo"
   "$HOME/bin/workspace_repos.sh" clone
   # Reset pwd
   cd "$install_dir"
