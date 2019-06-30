@@ -246,53 +246,6 @@ fi
 path_changes=""
 start_time="$(date -u +%s)"
 
-# VS Code with settings-sync
-if [ ${has_target[vscode]} ]; then
-  echo
-  echo "======================================================="
-  echo "Installing VS Code by adding it to the apt sources list"
-  echo "See https://code.visualstudio.com/docs/setup/linux"
-  echo "======================================================="
-  echo
-  install_packages gnupg
-  curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor >microsoft.gpg
-  sudo install -o root -g root -m 644 microsoft.gpg /etc/apt/trusted.gpg.d/
-  sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main" > /etc/apt/sources.list.d/vscode.list'
-
-  install_packages apt-transport-https
-  sudo apt-get update
-  install_packages code # or code-insiders
-
-  # Extensions
-  if [ ${has_target[flutter]} ] || [ ${installed[flutter]} ]; then
-    code --install-extension dart-code.flutter --force
-  fi
-  if [ ${has_target[pip]} ] || [ ${installed[pip]} ]; then
-    code --install-extension ms-python.python --force
-  fi
-  code --install-extension shan.code-settings-sync --force
-
-  if [ -n "$code_settings_gist" ]; then
-    install_packages jq
-    settings_file="$HOME/.config/Code/User/settings.json"
-    sync_file="$HOME/.config/Code/User/syncLocalSettings.json"
-    default_sync_settings="{ \"sync.gist\": \"$code_settings_gist\", \"sync.autoDownload\": true, \"sync.autoUpload\": true, \"sync.quietSync\": true }"
-    if [ -e "$settings_file" ]; then
-      echo 'Applying current settings on top of default sync settings.'
-      echo "$default_sync_settings $(cat ${settings_file})" | jq -s add >"$settings_file"
-    else
-      echo "$default_sync_settings" >"$settings_file"
-    fi
-    if [ -e "$sync_file" ]; then
-      tmp=$(mktemp)
-      jq ".token = \"$code_settings_token\"" "$sync_file" >"$tmp" && mv "$tmp" "$sync_file"
-    else
-      echo "{ \"token\": \"$code_settings_token\" }" >"$sync_file"
-    fi
-    code
-  fi
-fi
-
 # Flutter
 if [ ${has_target[flutter]} ]; then
   echo
@@ -496,6 +449,54 @@ if [ -n "$git_config_name" ]; then
   git config --global user.name "$git_config_name"
   git config --global user.email "$git_config_email"
 fi
+
+# VS Code with settings-sync
+if [ ${has_target[vscode]} ]; then
+  echo
+  echo "======================================================="
+  echo "Installing VS Code by adding it to the apt sources list"
+  echo "See https://code.visualstudio.com/docs/setup/linux"
+  echo "======================================================="
+  echo
+  install_packages gnupg
+  curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor >microsoft.gpg
+  sudo install -o root -g root -m 644 microsoft.gpg /etc/apt/trusted.gpg.d/
+  sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main" > /etc/apt/sources.list.d/vscode.list'
+
+  install_packages apt-transport-https
+  sudo apt-get update
+  install_packages code # or code-insiders
+
+  # Extensions
+  if [ ${has_target[flutter]} ] || [ ${installed[flutter]} ]; then
+    code --install-extension dart-code.flutter --force
+  fi
+  if [ ${has_target[pip]} ] || [ ${installed[pip]} ]; then
+    code --install-extension ms-python.python --force
+  fi
+  code --install-extension shan.code-settings-sync --force
+
+  if [ -n "$code_settings_gist" ]; then
+    install_packages jq
+    settings_file="$HOME/.config/Code/User/settings.json"
+    sync_file="$HOME/.config/Code/User/syncLocalSettings.json"
+    default_sync_settings="{ \"sync.gist\": \"$code_settings_gist\", \"sync.autoDownload\": true, \"sync.autoUpload\": true, \"sync.quietSync\": true }"
+    if [ -e "$settings_file" ]; then
+      echo 'Applying current settings on top of default sync settings.'
+      echo "$default_sync_settings $(cat ${settings_file})" | jq -s add >"$settings_file"
+    else
+      echo "$default_sync_settings" >"$settings_file"
+    fi
+    if [ -e "$sync_file" ]; then
+      tmp=$(mktemp)
+      jq ".token = \"$code_settings_token\"" "$sync_file" >"$tmp" && mv "$tmp" "$sync_file"
+    else
+      echo "{ \"token\": \"$code_settings_token\" }" >"$sync_file"
+    fi
+    code
+  fi
+fi
+
 
 end_time="$(date -u +%s)"
 elapsed="$(($end_time - $start_time))"
