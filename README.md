@@ -82,8 +82,8 @@ Many containers have been created to test this script on a chromebook with Linux
 requires having ssh setup with the proper keys. I have found it very helpful to
 keep my `.ssh/` directory as a top level folder in Chrome and "share it with
 Linux". This may be ill advised, but it helps save time. Then after creating a
-container, run `cp -r /mnt/chromeos/MyFiles/.ssh ~/` so that I have access to my
-repos.
+container, run `cp -r /mnt/chromeos/MyFiles/.ssh ~/ && chmod 400 ~/.ssh/id_rsa`
+so that I have access to my repos.
 
 > On Chrome 76 beta channel, sharing with Linux is buggy for secondary VMs, but
 seems consistent when using the termina VM.
